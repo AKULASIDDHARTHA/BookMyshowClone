@@ -1,0 +1,7 @@
+# Local credentials
+**/application-local.properties
+**/application-secret.properties
+**/.env
+
+# Maven generated files
+**/target/
