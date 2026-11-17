@@ -1,5 +1,8 @@
 package com.alpha.theaterservice.entity;
 
+import java.time.LocalTime;
+import java.util.Date;
+
 import org.hibernate.annotations.ManyToAny;
 
 import jakarta.persistence.Entity;
@@ -15,18 +18,40 @@ public class Show {
 	private int id;
 	@ManyToOne
 	private Movie movie;
+	
+	@ManyToOne
+	private Theater theater;
+	
 	private String title;
 	private String description;
 	private double duration;
 	private String language;
 	private int screenno;
-	public Show(Movie movie, String title, String description, double duration, String language, int screenno) {
+	private LocalTime time;
+	private Date date;
+	
+	public Show(Movie movie, String title, String description, double duration, String language, int screenno,LocalTime time,Date date,Theater theater) {
 		this.movie = movie;
 		this.title = title;
 		this.description = description;
 		this.duration = duration;
 		this.language = language;
 		this.screenno = screenno;
+		this.time=time;
+		this.date=date;
+		this.theater=theater;
+	}
+	public LocalTime getTime() {
+		return time;
+	}
+	public void setTime(LocalTime time) {
+		this.time = time;
+	}
+	public Date getDate() {
+		return date;
+	}
+	public void setDate(Date date) {
+		this.date = date;
 	}
 	public Show() {
 		super();
@@ -73,7 +98,11 @@ public class Show {
 	public void setScreenno(int screenno) {
 		this.screenno = screenno;
 	}
-	
-	
+	public Theater getTheater() {
+		return theater;
+	}
+	public void setTheater(Theater theater) {
+		this.theater = theater;
+	}
 
 }
