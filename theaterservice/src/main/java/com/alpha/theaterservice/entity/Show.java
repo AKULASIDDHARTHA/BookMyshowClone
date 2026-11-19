@@ -1,5 +1,6 @@
 package com.alpha.theaterservice.entity;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Date;
 
@@ -28,9 +29,9 @@ public class Show {
 	private String language;
 	private int screenno;
 	private LocalTime time;
-	private Date date;
+	private LocalDate date;
 	
-	public Show(Movie movie, String title, String description, double duration, String language, int screenno,LocalTime time,Date date,Theater theater) {
+	public Show(Movie movie, String title, String description, double duration, String language, int screenno,LocalTime time,LocalDate date,Theater theater) {
 		this.movie = movie;
 		this.title = title;
 		this.description = description;
@@ -47,11 +48,11 @@ public class Show {
 	public void setTime(LocalTime time) {
 		this.time = time;
 	}
-	public Date getDate() {
+	public LocalDate getDate() {
 		return date;
 	}
-	public void setDate(Date date) {
-		this.date = date;
+	public void setDate(LocalDate Date) {
+		this.date = Date;
 	}
 	public Show() {
 		super();

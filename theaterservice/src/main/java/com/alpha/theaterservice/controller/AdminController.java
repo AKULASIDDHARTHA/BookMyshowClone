@@ -52,4 +52,6 @@ public class AdminController {
 
         return adminser.findAllMovies();
     }
+
 }
+

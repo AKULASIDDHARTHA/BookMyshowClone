@@ -3,6 +3,8 @@ package com.alpha.theaterservice.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,8 +27,10 @@ public class Theater {
 	private String status;	
 	@OneToOne
 	private Address address;
+	@JsonIgnore
 	@OneToMany
 	private List<Show> allplayingshows;
+	
 	public Theater(String name, String description, String city, long contactnumber, String mailid,
 			int totalscreens, String status, Address address, List<Show> allplayingshows) {
 		this.name = name;

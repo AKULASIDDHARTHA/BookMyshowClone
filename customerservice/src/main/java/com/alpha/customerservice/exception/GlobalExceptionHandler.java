@@ -25,5 +25,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<ResponseStructure<String>>(
                 responseStructure, HttpStatus.CONFLICT);
     }
+    
+    @ExceptionHandler(CustomerNotFoundException.class)
+    public ResponseEntity<ResponseStructure<String>> handleCustomerNotFound(
+            CustomerNotFoundException ex) {
+
+        ResponseStructure<String> response = new ResponseStructure<>();
+
+        response.setStatuscode(HttpStatus.NOT_FOUND.value());
+        response.setMessage(ex.getMessage());
+        response.setData(null);
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
 
 }

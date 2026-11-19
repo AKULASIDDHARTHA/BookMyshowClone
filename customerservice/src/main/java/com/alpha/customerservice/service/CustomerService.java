@@ -11,6 +11,7 @@ import com.alpha.customerservice.dto.CreateCustomerDto;
 import com.alpha.customerservice.dto.ResponseStructure;
 import com.alpha.customerservice.entity.Customer;
 import com.alpha.customerservice.exception.CustomerAlreadyExistWithPhoneException;
+import com.alpha.customerservice.exception.CustomerNotFoundException;
 import com.alpha.customerservice.repository.CustomerRepository;
 
 @Service
@@ -56,65 +57,31 @@ public class CustomerService {
                 responseStructure, HttpStatus.CREATED);
     }
     
-    //Find
-	public ResponseEntity<ResponseStructure<Customer>> findCustomerById(int id) {
-		 Optional<Customer> customerOptional =
-	                customerRepo.findById(id);
+    //FIndCustomer
+    public ResponseEntity<ResponseStructure<Customer>> findCustomerById(int id) {
 
-	        ResponseStructure<Customer> responseStructure =
-	                new ResponseStructure<Customer>();
+        Customer customer = customerRepo.findById(id)
+                .orElseThrow(() -> new CustomerNotFoundException("CUSTOMER NOT FOUND"));
 
-	        if (customerOptional.isPresent()) {
+        ResponseStructure<Customer> responseStructure = new ResponseStructure<>();
 
-	            Customer customer = customerOptional.get();
+        responseStructure.setStatuscode(HttpStatus.OK.value());
+        responseStructure.setMessage("CUSTOMER FOUND SUCCESSFULLY");
+        responseStructure.setData(customer);
 
-	            responseStructure.setStatuscode(
-	                    HttpStatus.OK.value());
-
-	            responseStructure.setMessage(
-	                    "CUSTOMER FOUND SUCCESSFULLY");
-
-	            responseStructure.setData(customer);
-
-	            return new ResponseEntity<ResponseStructure<Customer>>(
-	                    responseStructure,
-	                    HttpStatus.OK);
-	        }
-
-	        responseStructure.setStatuscode(
-	                HttpStatus.NOT_FOUND.value());
-
-	        responseStructure.setMessage(
-	                "CUSTOMER NOT FOUND");
-
-	        responseStructure.setData(null);
-
-	        return new ResponseEntity<ResponseStructure<Customer>>(
-	                responseStructure,
-	                HttpStatus.NOT_FOUND);
-	}
-
+        return new ResponseEntity<>(responseStructure, HttpStatus.OK);
+    }
+    
 	//delete
 	public ResponseEntity<ResponseStructure<Customer>> deleteCustomerById(int id) {
-		    Optional<Customer> customerOptional = customerRepo.findById(id);
+		 Customer customer = customerRepo.findById(id)
+	                .orElseThrow(() -> new CustomerNotFoundException("CUSTOMER NOT FOUND"));
+		 ResponseStructure<Customer> responseStructure = new ResponseStructure<>();
+		 	customerRepo.delete(customer);
+	        responseStructure.setStatuscode(HttpStatus.OK.value());
+	        responseStructure.setMessage("CUSTOMER DELETED SUCCESSFULLY");
+	        responseStructure.setData(null);
 
-		    ResponseStructure<Customer> response = new ResponseStructure<>();
-
-		    if (customerOptional.isPresent()) {
-
-		        customerRepo.delete(customerOptional.get());
-
-		        response.setStatuscode(HttpStatus.OK.value());
-		        response.setMessage("CUSTOMER DELETED SUCCESSFULLY");
-		        response.setData(null);
-
-		        return new ResponseEntity<>(response, HttpStatus.OK);
-		    }
-
-		    response.setStatuscode(HttpStatus.NOT_FOUND.value());
-		    response.setMessage("CUSTOMER NOT FOUND");
-		    response.setData(null);
-
-		    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+	        return new ResponseEntity<>(responseStructure, HttpStatus.OK);
 		}
 	}

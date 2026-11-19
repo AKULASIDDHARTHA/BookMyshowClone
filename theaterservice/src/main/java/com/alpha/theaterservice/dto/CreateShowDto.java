@@ -1,17 +1,18 @@
 package com.alpha.theaterservice.dto;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Date;
 
-public class CretaeShowDto {
+public class CreateShowDto {
 	private String title;
 	private String description;
-	private Date date;
+	private LocalDate date;
 	private LocalTime time;
 	private String language;
 	private double duration;
 	private int screenno;
-	private int movieid;
+	private Long movieId;
 	
 	public String getTitle() {
 		return title;
@@ -25,10 +26,10 @@ public class CretaeShowDto {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public Date getDate() {
+	public LocalDate getDate() {
 		return date;
 	}
-	public void setDate(Date date) {
+	public void setDate(LocalDate date) {
 		this.date = date;
 	}
 	public LocalTime getTime() {
@@ -55,11 +56,12 @@ public class CretaeShowDto {
 	public void setScreenno(int screenno) {
 		this.screenno = screenno;
 	}
-	public int getMovieid() {
-		return movieid;
+	public long getMovieId() {
+	    return movieId;
 	}
-	public void setMovieid(int movieid) {
-		this.movieid = movieid;
+
+	public void setMovieId(long movieId) {
+	    this.movieId = movieId;
 	}
 	
 }
