@@ -12,9 +12,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TheaterAlreadyExistWithContactException.class)
     public ResponseEntity<ResponseStructure<String>> handleTheaterAlreadyExist(
             TheaterAlreadyExistWithContactException ex) {
-
         ResponseStructure<String> response = new ResponseStructure<>();
-
         response.setStatuscode(HttpStatus.CONFLICT.value());
         response.setMessage(ex.getMessage());
         response.setData(null);

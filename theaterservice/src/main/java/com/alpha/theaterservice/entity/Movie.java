@@ -43,10 +43,10 @@ public class Movie {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public String getCast() {
+	public String getMoviecast() {
 		return moviecast;
 	}
-	public void setCast(String moviecast) {
+	public void setMoviecast(String moviecast) {
 		this.moviecast = moviecast;
 	}
 	public String getLanguages() {
@@ -61,4 +61,5 @@ public class Movie {
 	public void setDuration(double duration) {
 		this.duration = duration;
 	}
+	
 }

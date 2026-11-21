@@ -13,7 +13,23 @@ public class CreateShowDto {
 	private double duration;
 	private int screenno;
 	private Long movieId;
+	private Double price;
+	private int capacity;
 	
+	public int getCapacity() {
+	    return capacity;
+	}
+
+	public void setCapacity(int capacity) {
+	    this.capacity = capacity;
+	}
+	
+	public Double getPrice() {
+		return price;
+	}
+	public void setPrice(Double price) {
+		this.price = price;
+	}
 	public String getTitle() {
 		return title;
 	}
@@ -59,7 +75,6 @@ public class CreateShowDto {
 	public long getMovieId() {
 	    return movieId;
 	}
-
 	public void setMovieId(long movieId) {
 	    this.movieId = movieId;
 	}

@@ -18,17 +18,22 @@ import com.alpha.theaterservice.dto.CreateTheaterDto;
 import com.alpha.theaterservice.dto.ResponseStructure;
 import com.alpha.theaterservice.dto.UpdateShowDto;
 import com.alpha.theaterservice.entity.Movie;
+import com.alpha.theaterservice.entity.Seat;
 import com.alpha.theaterservice.entity.Show;
 import com.alpha.theaterservice.entity.Theater;
 import com.alpha.theaterservice.repository.MovieRepository;
+import com.alpha.theaterservice.repository.SeatRepository;
 import com.alpha.theaterservice.service.AdminService;
 import com.alpha.theaterservice.service.TheaterService;
 
 @RestController
-public class AppController {
+public class TheaterController {
 
     @Autowired
     private TheaterService tser;
+    
+    @Autowired
+    private SeatRepository seatRepo;
    
     
     @PostMapping("/theater/createAccount")
@@ -91,8 +96,8 @@ public class AppController {
     	return tser.updateShow(id,dto);
     }
     
-    @GetMapping("/customer/findmovie")
-    public ResponseEntity<ResponseStructure<Movie>> findMovieByTitle(@RequestParam String moviename){
+    @GetMapping("/findmovie")
+    public ResponseEntity<ResponseStructure<List<Movie>>> findMovieByTitle(@RequestParam String moviename){
     	return tser.findMovieByTitle(moviename);
     }
     
@@ -101,8 +106,12 @@ public class AppController {
             @RequestParam String moviename,
             @RequestParam String language,
             @RequestParam LocalDate date) {
-
         return tser.buyTickets(moviename, language, date);
+    }
+    
+    @GetMapping("/shows/seats/available")
+    public List<Seat> getAvailableSeats(@RequestParam long showId) {
+        return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
     }
     
  	

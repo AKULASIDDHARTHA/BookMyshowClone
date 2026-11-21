@@ -25,7 +25,7 @@ public class AdminService {
         Movie movie = new Movie();
         movie.setTitle(dto.getTitle());
         movie.setDescription(dto.getDescription());
-        movie.setCast(dto.getMoviecast());
+        movie.setMoviecast(dto.getMoviecast());
         movie.setDuration(dto.getDuration());
         movie.setLanguages(dto.getLanguage());
 

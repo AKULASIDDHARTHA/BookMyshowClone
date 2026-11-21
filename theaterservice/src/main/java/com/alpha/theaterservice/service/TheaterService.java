@@ -11,12 +11,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.alpha.theaterservice.dto.CreateShowDto;
 import com.alpha.theaterservice.dto.CreateTheaterDto;
 import com.alpha.theaterservice.dto.ResponseStructure;
 import com.alpha.theaterservice.dto.UpdateShowDto;
 import com.alpha.theaterservice.entity.Movie;
+import com.alpha.theaterservice.entity.Seat;
 import com.alpha.theaterservice.entity.Show;
 import com.alpha.theaterservice.entity.Theater;
 import com.alpha.theaterservice.exception.InvalidScreenNumberException;
@@ -27,6 +30,7 @@ import com.alpha.theaterservice.exception.TheaterAlreadyExistWithContactExceptio
 import com.alpha.theaterservice.exception.TheaterNotFoundException;
 import com.alpha.theaterservice.repository.AdminRepository;
 import com.alpha.theaterservice.repository.MovieRepository;
+import com.alpha.theaterservice.repository.SeatRepository;
 import com.alpha.theaterservice.repository.ShowRepository;
 import com.alpha.theaterservice.repository.TheaterRepository;
 
@@ -41,6 +45,9 @@ public class TheaterService {
 
 	@Autowired
 	private ShowRepository showRepo;
+	
+	@Autowired
+	private SeatRepository seatRepo; 
 
 //	private AdminRepository adminRepo;
 
@@ -104,64 +111,95 @@ public class TheaterService {
 	}
 
 //creating new show
-public ResponseEntity<ResponseStructure<String>> CreateNewShow(CreateShowDto dto, long theaterId) {
 
-		// 1. Find theater by ID
-		Theater th = theaterRepo.findById(theaterId)
-				.orElseThrow(() -> new TheaterNotFoundException("THEATER NOT FOUND"));
+public ResponseEntity<ResponseStructure<String>> CreateNewShow(
+        CreateShowDto dto, long theaterId) {
 
-		// 2. Check screen number
-		if (dto.getScreenno() < 1 || dto.getScreenno() > th.getTotalscreens()) {
-			throw new InvalidScreenNumberException("INVALID SCREEN NUMBER");
-		}
+    // 1. Find theater
+    Theater th = theaterRepo.findById(theaterId)
+            .orElseThrow(() -> new TheaterNotFoundException("THEATER NOT FOUND"));
 
-		// 3. Check whether show already exists
-		Optional<Show> showOptional = showRepo.findByDateAndTimeAndScreennoAndTheater_Id(dto.getDate(), dto.getTime(),
-				dto.getScreenno(), theaterId);
+    // 2. Check screen number
+    if (dto.getScreenno() < 1 || dto.getScreenno() > th.getTotalscreens()) {
+        throw new InvalidScreenNumberException("INVALID SCREEN NUMBER");
+    }
 
-		if (showOptional.isPresent()) {
-			throw new ShowAlreadyExistsException("SHOW ALREADY EXISTS");
-		}
+    // 3. Check whether show already exists
+    Optional<Show> showOptional =
+            showRepo.findByDateAndTimeAndScreennoAndTheater_Id(
+                    dto.getDate(), dto.getTime(), dto.getScreenno(), theaterId);
 
-		// 4. Find movie by ID
-		Movie m = movieRepo.findById(dto.getMovieId()).orElseThrow(() -> new MovieNotFoundException("MOVIE NOT FOUND"));
+    if (showOptional.isPresent()) {
+        throw new ShowAlreadyExistsException("SHOW ALREADY EXISTS");
+    }
 
-		// 5. Create new Show
-		Show sh = new Show();
+    // 4. Find movie
+    Movie m = movieRepo.findById(dto.getMovieId())
+            .orElseThrow(() -> new MovieNotFoundException("MOVIE NOT FOUND"));
 
-		sh.setTitle(m.getTitle());
-		sh.setDescription(dto.getDescription());
-		sh.setDate(dto.getDate());
-		sh.setTime(dto.getTime());
-		sh.setLanguage(dto.getLanguage());
-		sh.setDuration(dto.getDuration());
-		sh.setScreenno(dto.getScreenno());
+    // 5. Create show
+    Show sh = new Show();
+    sh.setTitle(m.getTitle());
+    sh.setDescription(dto.getDescription());
+    sh.setDate(dto.getDate());
+    sh.setTime(dto.getTime());
+    sh.setLanguage(dto.getLanguage());
+    sh.setDuration(dto.getDuration());
+    sh.setScreenno(dto.getScreenno());
+    sh.setPrice(dto.getPrice());
+    sh.setMovie(m);
+    sh.setTheater(th);
 
-		// Set movie and theater
-		sh.setMovie(m);
-		sh.setTheater(th);
+    // 6. Generate seats based on capacity
+    List<Seat> seats = generateSeats(dto.getCapacity(), sh);
+    sh.setSeats(seats);
 
-		// Save show
-		Show savedShow = showRepo.save(sh);
+    // 7. Save show and seats
+    Show savedShow = showRepo.save(sh);
 
-		// Add show to theater
-		if (th.getAllplayingshows() == null) {
-			th.setAllplayingshows(new ArrayList<>());
-		}
+    // 8. Add show to theater
+    if (th.getAllplayingshows() == null) {
+        th.setAllplayingshows(new ArrayList<>());
+    }
 
-		th.getAllplayingshows().add(savedShow);
+    th.getAllplayingshows().add(savedShow);
+    theaterRepo.save(th);
 
-		theaterRepo.save(th);
+    // 9. Success response
+    ResponseStructure<String> response = new ResponseStructure<>();
 
-		// Success response
-		ResponseStructure<String> response = new ResponseStructure<>();
+    response.setStatuscode(HttpStatus.CREATED.value());
+    response.setMessage("NEW SHOW CREATED SUCCESSFULLY");
+    response.setData("Show created successfully");
 
-		response.setStatuscode(HttpStatus.CREATED.value());
-		response.setMessage("NEW SHOW CREATED SUCCESSFULLY");
-		response.setData("Show created successfully");
+    return new ResponseEntity<>(response, HttpStatus.CREATED);
+}
 
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
-	}
+public List<Seat> generateSeats(int capacity, Show show) {
+    if (capacity <= 0 || capacity % 30 != 0) {
+        throw new IllegalArgumentException(
+                "Capacity must be a positive multiple of 30");
+    }
+    List<Seat> seats = new ArrayList<>();
+    int catCapacity = capacity / 3;
+    int rows = catCapacity / 10;
+    String[] categories = {"SILVER", "GOLD", "DIAMOND"};
+    char row = 'A';
+    for (String category : categories) {
+        for (int i = 1; i <= rows; i++) {
+            for (int j = 1; j <= 10; j++) {
+                Seat seat = new Seat();
+                seat.setSeatno(row + String.valueOf(j));
+                seat.setCategory(category);
+                seat.setStatus("AVAILABLE");
+                seat.setShow(show);
+                seats.add(seat);
+            }
+            row++;
+        }
+    }
+    return seats;
+}
 
 //find all avaiable movie
 	public ResponseEntity<ResponseStructure<List<Movie>>> findAllAvailableMovies() {
@@ -217,16 +255,22 @@ public ResponseEntity<ResponseStructure<String>> CreateNewShow(CreateShowDto dto
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	public ResponseEntity<ResponseStructure<Movie>> findMovieByTitle(String moviename) {
-		Movie movie=movieRepo.findByTitleContainsIgnoreCase(moviename)
-				.orElseThrow(()->new MovieNotFoundException("Movie Not Found"));
-	    ResponseStructure<Movie> response = new ResponseStructure<>();
+	public ResponseEntity<ResponseStructure<List<Movie>>> findMovieByTitle(String moviename) {
+
+	    List<Movie> movies = movieRepo.findByTitleContainsIgnoreCase(moviename);
+
+	    if (movies.isEmpty()) {
+	        throw new MovieNotFoundException("MOVIES NOT FOUND");
+	    }
+
+	    ResponseStructure<List<Movie>> response = new ResponseStructure<>();
 	    response.setStatuscode(HttpStatus.OK.value());
-	    response.setMessage("Movie found");
-	    response.setData(movie);
-	    return new ResponseEntity<ResponseStructure<Movie>>(response,HttpStatus.OK);
-	}	
-	
+	    response.setMessage("Movies found");
+	    response.setData(movies);
+
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 	public ResponseEntity<ResponseStructure<List<Show>>> buyTickets(
 	        String moviename, String language, LocalDate date) {
 
@@ -241,4 +285,9 @@ public ResponseEntity<ResponseStructure<String>> CreateNewShow(CreateShowDto dto
 
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	public List<Seat> findAvailableSeats(long showId) {
+	    return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
+	}
+	
 }
