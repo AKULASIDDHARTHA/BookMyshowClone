@@ -34,8 +34,7 @@ public class TheaterController {
     
     @Autowired
     private SeatRepository seatRepo;
-   
-    
+  
     @PostMapping("/theater/createAccount")
     public ResponseEntity<ResponseStructure<Theater>> create(@RequestBody CreateTheaterDto t) {
 
@@ -108,12 +107,10 @@ public class TheaterController {
             @RequestParam LocalDate date) {
         return tser.buyTickets(moviename, language, date);
     }
-    
     @GetMapping("/shows/seats/available")
     public List<Seat> getAvailableSeats(@RequestParam long showId) {
-        return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
+        return tser.findAvailableSeats(showId);
     }
-    
  	
  }
 	

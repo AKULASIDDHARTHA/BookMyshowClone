@@ -174,33 +174,55 @@ public ResponseEntity<ResponseStructure<String>> CreateNewShow(
 
     return new ResponseEntity<>(response, HttpStatus.CREATED);
 }
-
 public List<Seat> generateSeats(int capacity, Show show) {
-    if (capacity <= 0 || capacity % 30 != 0) {
-        throw new IllegalArgumentException(
-                "Capacity must be a positive multiple of 30");
+
+    if (capacity <= 0) {
+        throw new IllegalArgumentException("Capacity must be positive");
     }
+
     List<Seat> seats = new ArrayList<>();
-    int catCapacity = capacity / 3;
-    int rows = catCapacity / 10;
+
     String[] categories = {"SILVER", "GOLD", "DIAMOND"};
+
+    int baseCapacity = capacity / 3;
+    int remainder = capacity % 3;
+
     char row = 'A';
-    for (String category : categories) {
-        for (int i = 1; i <= rows; i++) {
-            for (int j = 1; j <= 10; j++) {
-                Seat seat = new Seat();
-                seat.setSeatno(row + String.valueOf(j));
-                seat.setCategory(category);
-                seat.setStatus("AVAILABLE");
-                seat.setShow(show);
-                seats.add(seat);
+
+    for (int i = 0; i < 3; i++) {
+
+        int categoryCapacity = baseCapacity;
+
+        if (i < remainder) {
+            categoryCapacity++;
+        }
+
+        int seatNumber = 1;
+
+        for (int j = 1; j <= categoryCapacity; j++) {
+            Seat seat = new Seat();
+            seat.setSeatno(row + String.valueOf(seatNumber));
+            seat.setCategory(categories[i]);
+            seat.setStatus("AVAILABLE");
+            seat.setShow(show);
+
+            seats.add(seat);
+
+            seatNumber++;
+
+            if (seatNumber > 10) {
+                seatNumber = 1;
+                row++;
             }
+        }
+
+        if (seatNumber != 1) {
             row++;
         }
     }
+
     return seats;
 }
-
 //find all avaiable movie
 	public ResponseEntity<ResponseStructure<List<Movie>>> findAllAvailableMovies() {
 		List<Movie> movies = movieRepo.findAll();
@@ -287,7 +309,11 @@ public List<Seat> generateSeats(int capacity, Show show) {
 	}
 	
 	public List<Seat> findAvailableSeats(long showId) {
-	    return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
-	}
+        if (!showRepo.existsById(showId)) {
+            throw new ShowNotFoundException("SHOW NOT FOUND");
+        }
+        return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
+    }
+
 	
 }
