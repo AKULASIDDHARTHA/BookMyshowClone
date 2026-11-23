@@ -1,12 +1,12 @@
 package com.alpha.theaterservice.repository;
 
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import com.alpha.theaterservice.entity.Seat;
 
-public interface SeatRepository extends JpaRepository<Seat, Long> {
+public interface SeatRepository extends JpaRepository<Seat, Integer> {
 
     List<Seat> findByShow_IdAndStatus(long showId, String status);
+
+    List<Seat> findByShow_IdAndSeatnoIn(long showId, List<String> seatNumbers);
 }

@@ -24,6 +24,8 @@ import com.alpha.theaterservice.entity.Show;
 import com.alpha.theaterservice.entity.Theater;
 import com.alpha.theaterservice.exception.InvalidScreenNumberException;
 import com.alpha.theaterservice.exception.MovieNotFoundException;
+import com.alpha.theaterservice.exception.SeatNotAvailableException;
+import com.alpha.theaterservice.exception.SeatNotFoundException;
 import com.alpha.theaterservice.exception.ShowAlreadyExistsException;
 import com.alpha.theaterservice.exception.ShowNotFoundException;
 import com.alpha.theaterservice.exception.TheaterAlreadyExistWithContactException;
@@ -33,6 +35,8 @@ import com.alpha.theaterservice.repository.MovieRepository;
 import com.alpha.theaterservice.repository.SeatRepository;
 import com.alpha.theaterservice.repository.ShowRepository;
 import com.alpha.theaterservice.repository.TheaterRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class TheaterService {
@@ -308,6 +312,7 @@ public List<Seat> generateSeats(int capacity, Show show) {
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	
 	public List<Seat> findAvailableSeats(long showId) {
         if (!showRepo.existsById(showId)) {
             throw new ShowNotFoundException("SHOW NOT FOUND");
@@ -315,5 +320,31 @@ public List<Seat> generateSeats(int capacity, Show show) {
         return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
     }
 
+	
+	@Transactional
+	public List<Seat> lockSeats(long showId, List<String> seatNumbers) {
+
+		for (int i = 0; i < seatNumbers.size(); i++) {
+		    seatNumbers.set(i, seatNumbers.get(i).toUpperCase());
+		}
+	    List<Seat> seats =
+	            seatRepo.findByShow_IdAndSeatnoIn(showId, seatNumbers);
+
+	    if (seats.size() != seatNumbers.size()) {
+	        throw new SeatNotFoundException("SELECTED SEATS NOT FOUND");
+	    }
+	    for (Seat seat : seats) {
+
+	    	if (!seat.getStatus().equalsIgnoreCase("AVAILABLE")) {
+	    	    throw new SeatNotAvailableException(
+	    	            seat.getSeatno() + " is not available");
+	    	}
+	    }
+	    for (Seat seat : seats) {
+	        seat.setStatus("LOCKED");
+	    }
+	    seatRepo.saveAll(seats);
+	    return seats;
+	}
 	
 }

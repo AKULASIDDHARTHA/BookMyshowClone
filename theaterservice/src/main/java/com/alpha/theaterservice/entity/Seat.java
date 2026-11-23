@@ -25,7 +25,6 @@ public class Seat {
 
     private String status;  // booked / available
     
-    
 
     public Seat() {
         super();

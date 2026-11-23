@@ -42,7 +42,7 @@ public class TheaterController {
         
         return tser.createTheaterAccount(t);
     }
-   
+
     @GetMapping("/theater/findById")
     public ResponseEntity<ResponseStructure<Theater>> findById(
             @RequestParam long id) {
@@ -73,6 +73,7 @@ public class TheaterController {
     
     @Autowired
     private MovieRepository movieRepo;
+    
     @GetMapping("/theater/findAvailableMovies")
     public ResponseEntity<ResponseStructure<List<Movie>>> findAvailableMovies() {
 
@@ -107,9 +108,20 @@ public class TheaterController {
             @RequestParam LocalDate date) {
         return tser.buyTickets(moviename, language, date);
     }
+    
     @GetMapping("/shows/seats/available")
     public List<Seat> getAvailableSeats(@RequestParam long showId) {
         return tser.findAvailableSeats(showId);
+    }
+    
+    @PostMapping("/shows/seats/lock")
+    public ResponseEntity<List<Seat>> lockSeats(
+            @RequestParam long showId,
+            @RequestBody List<String> seatNumbers) {
+
+        List<Seat> seats = tser.lockSeats(showId, seatNumbers);
+
+        return ResponseEntity.ok(seats);
     }
  	
  }

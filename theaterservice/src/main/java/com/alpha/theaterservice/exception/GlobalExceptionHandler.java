@@ -81,4 +81,30 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
+    
+    @ExceptionHandler(SeatNotAvailableException.class)
+    public ResponseEntity<ResponseStructure<String>> handleSeatNotAvailable(
+            SeatNotAvailableException ex) {
+
+        ResponseStructure<String> response = new ResponseStructure<>();
+
+        response.setStatuscode(HttpStatus.CONFLICT.value());
+        response.setMessage(ex.getMessage());
+        response.setData(null);
+
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+    
+    @ExceptionHandler(SeatNotFoundException.class)
+    public ResponseEntity<ResponseStructure<String>> handleSeatNotFound(
+            SeatNotFoundException ex) {
+
+        ResponseStructure<String> response = new ResponseStructure<>();
+
+        response.setStatuscode(HttpStatus.NOT_FOUND.value());
+        response.setMessage(ex.getMessage());
+        response.setData(null);
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
 }
