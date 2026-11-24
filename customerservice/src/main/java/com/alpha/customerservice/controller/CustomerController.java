@@ -60,6 +60,18 @@ public class CustomerController {
     List<SeatDto> seats = customerservice.selectSeat(showId);
     return ResponseEntity.ok(seats);
 }
+    
+    @GetMapping("/customer/availableSeats")
+    public ResponseEntity<List<SeatDto>> availableSeats(
+            @RequestParam long showId) {
+
+        List<SeatDto> seats = customerservice.availableSeats(showId);
+
+        return ResponseEntity.ok(seats);
+    }
+    
+    
+    
     @PostMapping("/customer/bookseat")
     public ResponseEntity<Ticket> bookSeats(@RequestBody BookSeatDto dto) {
 
@@ -71,10 +83,9 @@ public class CustomerController {
 
         return ResponseEntity.ok(ticket);
     }
-  
     @PutMapping("/customer/bookticket/pay")
     public ResponseEntity<Ticket> bookTicketPayment(
-            @RequestParam long ticketId) {
+            @RequestParam int ticketId) {
 
         Ticket ticket = customerservice.bookTicketPayment(ticketId);
 

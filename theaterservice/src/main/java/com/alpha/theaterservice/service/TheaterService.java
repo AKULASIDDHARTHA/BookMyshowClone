@@ -334,7 +334,6 @@ public List<Seat> generateSeats(int capacity, Show show) {
 	        throw new SeatNotFoundException("SELECTED SEATS NOT FOUND");
 	    }
 	    for (Seat seat : seats) {
-
 	    	if (!seat.getStatus().equalsIgnoreCase("AVAILABLE")) {
 	    	    throw new SeatNotAvailableException(
 	    	            seat.getSeatno() + " is not available");
@@ -346,5 +345,4 @@ public List<Seat> generateSeats(int capacity, Show show) {
 	    seatRepo.saveAll(seats);
 	    return seats;
 	}
-	
 }

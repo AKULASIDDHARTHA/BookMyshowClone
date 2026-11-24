@@ -32,7 +32,7 @@
 			this.paymentStatus = paymentStatus;
 		}
 		public Ticket(String username, String seatno, LocalTime showtime, String moviename, int screenno,
-				double totalamount, LocalDate date, String language, LocalDateTime bookingDate) {
+				double totalamount, LocalDate date, String language, LocalDateTime bookingDate,boolean paymentStatus) {
 			super();
 			this.username = username;
 			this.seatno = seatno;
@@ -43,6 +43,7 @@
 			this.date = date;
 			this.language = language;
 			this.bookingDate = bookingDate;
+			this.paymentStatus=paymentStatus;
 		}
 		public Ticket() {
 			super();
