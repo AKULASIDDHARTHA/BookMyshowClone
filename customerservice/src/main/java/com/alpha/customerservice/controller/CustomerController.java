@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alpha.customerservice.dto.BookSeatDto;
+import com.alpha.customerservice.dto.ConfirmTicketDto;
 import com.alpha.customerservice.dto.CreateCustomerDto;
 import com.alpha.customerservice.dto.MovieDto;
 import com.alpha.customerservice.dto.ResponseStructure;
@@ -60,7 +61,7 @@ public class CustomerController {
     List<SeatDto> seats = customerservice.selectSeat(showId);
     return ResponseEntity.ok(seats);
 }
-    
+   
     @GetMapping("/customer/availableSeats")
     public ResponseEntity<List<SeatDto>> availableSeats(
             @RequestParam long showId) {
@@ -70,24 +71,24 @@ public class CustomerController {
         return ResponseEntity.ok(seats);
     }
     
-    
-    
     @PostMapping("/customer/bookseat")
-    public ResponseEntity<Ticket> bookSeats(@RequestBody BookSeatDto dto) {
+    public ResponseEntity<ConfirmTicketDto> bookSeats(
+            @RequestBody BookSeatDto dto) {
 
-        Ticket ticket = customerservice.bookSeats(
+        ConfirmTicketDto result = customerservice.bookSeats(
                 dto.getCustomerId(),
                 dto.getShowId(),
                 dto.getSeats()
         );
 
-        return ResponseEntity.ok(ticket);
+        return ResponseEntity.ok(result);
     }
-    @PutMapping("/customer/bookticket/pay")
-    public ResponseEntity<Ticket> bookTicketPayment(
-            @RequestParam int ticketId) {
+    
+    @PostMapping("/customer/confirmticket/pay")
+    public ResponseEntity<Ticket> confirmTicketAndPay(
+            @RequestParam long custid) {
 
-        Ticket ticket = customerservice.bookTicketPayment(ticketId);
+        Ticket ticket = customerservice.confirmTicketAndPay(custid);
 
         return ResponseEntity.ok(ticket);
     }
