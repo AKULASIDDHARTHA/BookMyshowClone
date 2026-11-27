@@ -23,4 +23,9 @@ public interface ShowRepository extends JpaRepository<Show, Long> {
             String title,
             String language,
             LocalDate date);
+    
+    List<Show> findByTheater_IdAndDate(long theaterId, LocalDate date);
+    
+    List<Show> findByTheater_IdAndTitleContainingIgnoreCase(
+            long theaterId, String title);
 }

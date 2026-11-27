@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.annotation.Generated;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,7 +26,8 @@ public class Theater {
 	private String mailid;
 	private int totalscreens;
 	private String status;	
-	@OneToOne
+	
+	@OneToOne(cascade = CascadeType.ALL)
 	private Address address;
 	@JsonIgnore
 	@OneToMany

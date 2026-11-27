@@ -80,4 +80,47 @@ public class AdminService {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    
+
+    public ResponseStructure<Movie> updateMovie(CreateMovieDto dto) {
+
+        Movie movie = movieRepo.findById((long) dto.getId())
+                .orElseThrow(() ->
+                    new MovieNotFoundException("MOVIE NOT FOUND"));
+
+        movie.setTitle(dto.getTitle());
+        movie.setDescription(dto.getDescription());
+        movie.setMoviecast(dto.getMoviecast());
+        movie.setLanguages(dto.getLanguage());
+        movie.setDuration(dto.getDuration());
+
+        movieRepo.save(movie);
+
+        ResponseStructure<Movie> response = new ResponseStructure<>();
+
+        response.setStatuscode(200);
+        response.setMessage("MOVIE DETAILS UPDATED SUCCESSFULLY");
+        response.setData(movie);
+
+        return response;
+    }
+    
+    
+    public ResponseStructure<List<Movie>> findMovieByName(String title) {
+        List<Movie> movies = movieRepo.findByTitleContainsIgnoreCase(title);
+
+        if (movies.isEmpty()) {
+            throw new MovieNotFoundException("MOVIE NOT FOUND");
+        }
+
+        ResponseStructure<List<Movie>> response = new ResponseStructure<>();
+
+        response.setStatuscode(200);
+        response.setMessage("MOVIES FOUND SUCCESSFULLY");
+        response.setData(movies);
+
+        return response;
+    }
+    
+    
 }

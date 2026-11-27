@@ -4,9 +4,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +41,7 @@ public class TheaterController {
     public ResponseEntity<ResponseStructure<Theater>> create(@RequestBody CreateTheaterDto t) {
 
         System.out.println("Theater Registered");
+        
         
         return tser.createTheaterAccount(t);
     }
@@ -123,6 +126,46 @@ public class TheaterController {
 
         return ResponseEntity.ok(seats);
     }
- 	
+    
+    @PatchMapping("/theater/updateAccount")
+    public ResponseEntity<ResponseStructure<Theater>> updateTheater(
+            @RequestParam long theaterid,
+            @RequestBody CreateTheaterDto dto) {
+
+        ResponseStructure<Theater> response =
+                tser.updateTheater(theaterid, dto);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+//  delete show by theater id and showid
+  @DeleteMapping("/theater/show/delete")
+  public ResponseEntity<ResponseStructure<Show>> deleteShow(
+          @RequestParam long theaterid,
+          @RequestParam long showid) {
+
+      return tser.deleteShow(theaterid, showid);
+  }
+  
+  @GetMapping("/theater/show/findByDate")
+  public ResponseEntity<ResponseStructure<List<Show>>> findShowsByDate(
+          @RequestParam long theaterid,
+          @RequestParam LocalDate date) {
+      ResponseStructure<List<Show>> response =
+              tser.findShowsByDate(theaterid, date);
+      return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  
+  @GetMapping("/theater/show/findByMovie")
+  public ResponseEntity<ResponseStructure<List<Show>>> findShowsByMovie(
+          @RequestParam long theaterid,
+          @RequestParam String title) {
+
+      ResponseStructure<List<Show>> response =
+              tser.findShowsByMovie(theaterid, title);
+
+      return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  
  }
 	

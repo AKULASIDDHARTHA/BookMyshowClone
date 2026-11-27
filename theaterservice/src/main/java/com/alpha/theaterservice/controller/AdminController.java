@@ -4,10 +4,12 @@ package com.alpha.theaterservice.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,6 +54,27 @@ public class AdminController {
 
         return adminser.findAllMovies();
     }
+    
+    
+    @PutMapping("/admin/movie/update")
+    public ResponseEntity<ResponseStructure<Movie>> updateMovie(
+            @RequestBody CreateMovieDto dto) {
+
+        ResponseStructure<Movie> response = adminser.updateMovie(dto);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
+    @GetMapping("/admin/movie/search")
+    public ResponseEntity<ResponseStructure<List<Movie>>> findMovieByName(
+            @RequestParam String title) {
+
+        ResponseStructure<List<Movie>> response =
+                adminser.findMovieByName(title);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
 
 }
 

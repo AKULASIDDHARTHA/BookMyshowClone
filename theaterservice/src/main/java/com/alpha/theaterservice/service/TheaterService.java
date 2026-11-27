@@ -53,7 +53,6 @@ public class TheaterService {
 	@Autowired
 	private SeatRepository seatRepo; 
 
-//	private AdminRepository adminRepo;
 
 	public ResponseEntity<ResponseStructure<Theater>> createTheaterAccount(CreateTheaterDto createTheaterDto) {
 		Optional<Theater> theaterOptional = theaterRepo.findByContactnumber(createTheaterDto.getContactnumber());
@@ -345,4 +344,101 @@ public List<Seat> generateSeats(int capacity, Show show) {
 	    seatRepo.saveAll(seats);
 	    return seats;
 	}
+	
+	
+	public ResponseStructure<Theater> updateTheater(long theaterid, CreateTheaterDto dto) {
+
+	    Theater theater = theaterRepo.findById(theaterid)
+	            .orElseThrow(() ->
+	                new TheaterNotFoundException("THEATER NOT FOUND"));
+
+	    theater.setName(dto.getName());
+	    theater.setDescription(dto.getDescription());
+	    theater.setCity(dto.getCity());
+	    theater.setContactnumber(dto.getContactnumber());
+	    theater.setMailid(dto.getMailid());
+	    theater.setTotalscreens(dto.getTotalscreens());
+	    theater.setAddress(dto.getAddress());
+
+	    theaterRepo.save(theater);
+
+	    ResponseStructure<Theater> response = new ResponseStructure<>();
+
+	    response.setStatuscode(200);
+	    response.setMessage("THEATER DETAILS UPDATED SUCCESSFULLY");
+	    response.setData(theater);
+
+	    return response;
+	}
+	
+	
+	// Delete Show by showid and theater id
+		public ResponseEntity<ResponseStructure<Show>> deleteShow(long theaterId, long showId) {
+		    // Check theater
+		    Theater theater = theaterRepo.findById(theaterId)
+		            .orElseThrow(() ->
+		                    new TheaterNotFoundException("Theater is not found"));
+		    // Check show
+		    Show show = showRepo.findById(showId)
+		            .orElseThrow(() ->
+		                    new ShowNotFoundException("Show is not found"));
+		    // checking show belongs to this theater..
+		    if (show.getTheater() == null ||
+		            show.getTheater().getId() != theaterId) {
+		        throw new ShowNotFoundException(
+		                "Show does not belong to this theater");
+		    }
+		    // Remove show from theater's list
+		    if (theater.getAllplayingshows() != null) {
+		        theater.getAllplayingshows().removeIf(
+		                s -> s.getId() == showId
+		        );
+		        theaterRepo.save(theater);
+		    }
+		    showRepo.delete(show);
+		    ResponseStructure<Show> rs = new ResponseStructure<>();
+		    rs.setStatuscode(HttpStatus.OK.value());
+		    rs.setMessage("Show deleted successfully");
+		    rs.setData(show);
+		    return new ResponseEntity<>(rs, HttpStatus.OK);
+		}
+		
+		public ResponseStructure<List<Show>> findShowsByDate(long theaterid, LocalDate date) {
+
+		    Theater theater = theaterRepo.findById(theaterid)
+		            .orElseThrow(() -> new TheaterNotFoundException("THEATER NOT FOUND"));
+
+		    List<Show> shows = showRepo.findByTheater_IdAndDate(theaterid, date);
+
+		    if (shows.isEmpty()) {
+		        throw new ShowNotFoundException("NO SHOWS FOUND ON THIS DATE");
+		    }
+
+		    ResponseStructure<List<Show>> response = new ResponseStructure<>();
+		    response.setStatuscode(200);
+		    response.setMessage("SHOWS FOUND SUCCESSFULLY");
+		    response.setData(shows);
+
+		    return response;
+		}
+		
+		public ResponseStructure<List<Show>> findShowsByMovie(long theaterid, String title) {
+
+		    theaterRepo.findById(theaterid)
+		            .orElseThrow(() -> new TheaterNotFoundException("THEATER NOT FOUND"));
+
+		    List<Show> shows =
+		            showRepo.findByTheater_IdAndTitleContainingIgnoreCase(theaterid, title);
+
+		    if (shows.isEmpty()) {
+		        throw new ShowNotFoundException("NO SHOWS FOUND FOR THIS MOVIE");
+		    }
+
+		    ResponseStructure<List<Show>> response = new ResponseStructure<>();
+		    response.setStatuscode(200);
+		    response.setMessage("SHOWS FOUND SUCCESSFULLY");
+		    response.setData(shows);
+
+		    return response;
+		}
 }

@@ -36,7 +36,6 @@ public class CustomerController {
         return customerservice.createCustomerAccount(c);
     }
     
-
     @GetMapping("/customer/findById")
     public ResponseEntity<ResponseStructure<Customer>> findById(@RequestParam int id) {
 
@@ -80,7 +79,6 @@ public class CustomerController {
                 dto.getShowId(),
                 dto.getSeats()
         );
-
         return ResponseEntity.ok(result);
     }
     

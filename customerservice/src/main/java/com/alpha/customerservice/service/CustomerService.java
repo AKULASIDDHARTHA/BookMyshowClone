@@ -159,80 +159,159 @@ public class CustomerService {
 	    }
 	}
 	
-	public ConfirmTicketDto bookSeats(long customerId, long showId, List<String> seats) {
-	    Customer customer = customerRepo.findById((int) customerId)
-	            .orElseThrow(() ->
-	                new CustomerNotFoundException("CUSTOMER NOT FOUND"));
-	    String showUrl = "http://localhost:8080/theater/findshow?id=" + showId;
-	    ResponseEntity<ResponseStructure<ShowDto>> showResponse =
-	            restTemplate.exchange(
-	                    showUrl,
-	                    HttpMethod.GET,
-	                    null,
-	                    new ParameterizedTypeReference<ResponseStructure<ShowDto>>() {}
-	            );
-	    ShowDto show = showResponse.getBody().getData();
-	    String value = "customer:" + customerId;
-	    List<String> lockedKeys = new ArrayList<>();
-	    try {
-	        // 1. Freeze seats in Redis
-	        for (String seat : seats) {
 
-	            String key = getSeatKey(showId, seat);
+public ConfirmTicketDto bookSeats(long customerId, long showId, List<String> seats) {
 
-	            Boolean result = redisTemplate.opsForValue()
-	                    .setIfAbsent(key, value, Duration.ofSeconds(30));
+    // 1. Find customer
+    Customer customer = customerRepo.findById((int) customerId)
+            .orElseThrow(() ->
+                new CustomerNotFoundException("CUSTOMER NOT FOUND"));
 
-	            if (!Boolean.TRUE.equals(result)) {
-	                throw new SeatNotAvailableException(
-	                        seat + " IS ALREADY RESERVED");
-	            }
+    try {
 
-	            lockedKeys.add(key);
-	        }
+        // 2. Get show details
+        String showUrl =
+                "http://localhost:8080/theater/findshow?id=" + showId;
 
-	        // 2. Create confirmation DTO
-	        ConfirmTicketDto dto = new ConfirmTicketDto();
-	        dto.setMoviename(show.getTitle());
-	        dto.setDate(show.getDate());
-	        dto.setTime(show.getTime());
-	        dto.setLanguage(show.getLanguage());
-	        dto.setNoOfSeats(seats.size());
-	        dto.setSeatno(String.join(",", seats));
-	        dto.setTicketPrice(show.getPrice());
-	        // Temporary value; replace with your actual convenience fee
-	        dto.setConvenienceFees(0.0);
-	        dto.setTheatreName("Not Available");
-	        dto.setScreenNo(show.getScreenno());
-	        double totalPrice =
-	                (show.getPrice() * seats.size()) + dto.getConvenienceFees();
-	        dto.setTotalPrice(totalPrice);
-	        dto.setCustomer(customer.getName());
-	        dto.setCustomerNo(String.valueOf(customer.getPhone()));
-	        
-	        dto.setShowId(showId);
-	        // 3. Store confirmation details in Redis
-	        String confirmKey = "confirmticket:" + customerId;
-	        String json = objectMapper.writeValueAsString(dto);
-	        redisTemplate.opsForValue().set(
-	                confirmKey,
-	                json,
-	                Duration.ofSeconds(30)
-	        );
-	        return dto;
-	    } catch (Exception e) {
+        ResponseEntity<ResponseStructure<ShowDto>> showResponse =
+                restTemplate.exchange(
+                        showUrl,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<ResponseStructure<ShowDto>>() {}
+                );
 
-	        // Release seats if confirmation creation fails
-	        for (String key : lockedKeys) {
-	            String existingValue = redisTemplate.opsForValue().get(key);
+        ShowDto show = showResponse.getBody().getData();
 
-	            if (value.equals(existingValue)) {
-	                redisTemplate.delete(key);
-	            }
-	        }
-	        throw new RuntimeException("TICKET CONFIRMATION FAILED: " + e.getMessage());
-	    }
-	}
+        // 3. Get available seats from Theater Service
+        String seatUrl =
+                "http://localhost:8080/shows/seats/available?showId=" + showId;
+
+        ResponseEntity<List<SeatDto>> seatResponse =
+                restTemplate.exchange(
+                        seatUrl,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<SeatDto>>() {}
+                );
+
+        List<SeatDto> availableSeats = seatResponse.getBody();
+
+        // 4. Validate selected seats
+        for (String selectedSeat : seats) {
+
+            boolean found = false;
+
+            for (SeatDto seat : availableSeats) {
+
+                if (seat.getSeatno().equalsIgnoreCase(selectedSeat)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throw new SeatNotAvailableException(
+                        selectedSeat + " SEAT DOES NOT EXIST OR IS NOT AVAILABLE");
+            }
+        }
+
+        // 5. Freeze seats in Redis
+        String value = "customer:" + customerId;
+
+        List<String> lockedKeys = new ArrayList<>();
+
+        try {
+
+            for (String seat : seats) {
+
+                String key = getSeatKey(showId, seat);
+
+                Boolean result = redisTemplate.opsForValue()
+                        .setIfAbsent(key, value, Duration.ofSeconds(30));
+
+                if (!Boolean.TRUE.equals(result)) {
+
+                    throw new SeatNotAvailableException(
+                            seat + " IS ALREADY RESERVED");
+                }
+
+                lockedKeys.add(key);
+            }
+
+            // 6. Create ConfirmTicketDto
+            ConfirmTicketDto dto = new ConfirmTicketDto();
+
+            dto.setMoviename(show.getTitle());
+            dto.setDate(show.getDate());
+            dto.setTime(show.getTime());
+            dto.setLanguage(show.getLanguage());
+            dto.setNoOfSeats(seats.size());
+            dto.setSeatno(String.join(",", seats));
+            dto.setShowId(showId);
+
+            dto.setTicketPrice(show.getPrice());
+            dto.setConvenienceFees(0.0);
+            dto.setTheatreName("Not Available");
+            dto.setScreenNo(show.getScreenno());
+
+            double totalPrice =
+                    (show.getPrice() * seats.size()) + dto.getConvenienceFees();
+
+            dto.setTotalPrice(totalPrice);
+            dto.setCustomer(customer.getName());
+            dto.setCustomerNo(String.valueOf(customer.getPhone()));
+
+            // 7. Store confirmation details in Redis
+            String confirmKey = "confirmticket:" + customerId;
+
+            String json = objectMapper.writeValueAsString(dto);
+
+            redisTemplate.opsForValue().set(
+                    confirmKey,
+                    json,
+                    Duration.ofSeconds(30)
+            );
+
+            return dto;
+
+        } catch (SeatNotAvailableException e) {
+
+            // Release locks created by this booking attempt
+            for (String key : lockedKeys) {
+
+                String existingValue =
+                        redisTemplate.opsForValue().get(key);
+
+                if (value.equals(existingValue)) {
+                    redisTemplate.delete(key);
+                }
+            }
+
+            throw e;
+
+        } catch (Exception e) {
+
+            // Release locks if confirmation creation fails
+            for (String key : lockedKeys) {
+
+                String existingValue =
+                        redisTemplate.opsForValue().get(key);
+
+                if (value.equals(existingValue)) {
+                    redisTemplate.delete(key);
+                }
+            }
+
+            throw new RuntimeException(
+                    "TICKET CONFIRMATION FAILED: " + e.getMessage());
+        }
+
+    } catch (SeatNotAvailableException e) {
+        throw e;
+    }
+}
+
 	
 	
 	private String getSeatKey(long showId, String seatNo) {
@@ -293,7 +372,6 @@ public class CustomerService {
 	        String[] seats = dto.getSeatno().split(",");
 
 	        for (String seat : seats) {
-
 	            String key = getSeatKey(dto.getShowId(), seat);
 
 	            String value = redisTemplate.opsForValue().get(key);
@@ -336,7 +414,6 @@ public class CustomerService {
 
 	            return savedTicket;
 	        }
-
 	        throw new RuntimeException("PAYMENT FAILED");
 
 	    } catch (SeatNotAvailableException e) {

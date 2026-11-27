@@ -2,6 +2,7 @@ package com.alpha.theaterservice.dto;
 
 
 public class CreateMovieDto {
+	private int id;
 	private  String title;
 	private String description;
 	private String moviecast;
@@ -9,6 +10,12 @@ public class CreateMovieDto {
 	private String language;
 	public CreateMovieDto() {
 		super();
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
 	}
 	public String getTitle() {
 		return title;
