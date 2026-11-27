@@ -167,5 +167,22 @@ public class TheaterController {
       return new ResponseEntity<>(response, HttpStatus.OK);
   }
   
+  @GetMapping("/theater/show/findByScreen")
+  public ResponseEntity<ResponseStructure<List<Show>>> findShowsByScreen(
+          @RequestParam long theaterid,
+          @RequestParam int screenno) {
+
+      return tser.findShowsByScreen(theaterid, screenno);
+  }
+  
+  @GetMapping("/theater/show/getShowDetails")
+  public ResponseEntity<ResponseStructure<Show>> getShowDetails(
+          @RequestParam long theaterid,
+          @RequestParam long showid) {
+
+      return tser.getShowDetails(theaterid, showid);
+  }
+  
+  
  }
 	

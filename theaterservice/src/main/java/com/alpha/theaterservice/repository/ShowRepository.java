@@ -28,4 +28,5 @@ public interface ShowRepository extends JpaRepository<Show, Long> {
     
     List<Show> findByTheater_IdAndTitleContainingIgnoreCase(
             long theaterId, String title);
+    List<Show> findByTheater_IdAndScreenno(long theaterId, int screenno);
 }

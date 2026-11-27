@@ -441,4 +441,56 @@ public List<Seat> generateSeats(int capacity, Show show) {
 
 		    return response;
 		}
+	
+		// find shows by screen
+
+		public ResponseEntity<ResponseStructure<List<Show>>> findShowsByScreen(
+		        long theaterid, int screenno) {
+
+		    Theater theater = theaterRepo.findById(theaterid)
+		            .orElseThrow(() ->
+		                new TheaterNotFoundException("THEATER NOT FOUND"));
+
+		    List<Show> shows =
+		            showRepo.findByTheater_IdAndScreenno(theaterid, screenno);
+
+		    if (shows.isEmpty()) {
+		        throw new ShowNotFoundException("NO SHOWS FOUND ON THIS SCREEN");
+		    }
+
+		    ResponseStructure<List<Show>> response = new ResponseStructure<>();
+		    response.setStatuscode(HttpStatus.OK.value());
+		    response.setMessage("SHOWS FOUND SUCCESSFULLY");
+		    response.setData(shows);
+
+		    return new ResponseEntity<>(response, HttpStatus.OK);
+		}
+		
+		// get complete show details
+
+		public ResponseEntity<ResponseStructure<Show>> getShowDetails(
+		        long theaterid, long showid) {
+
+		    Theater theater = theaterRepo.findById(theaterid)
+		            .orElseThrow(() ->
+		                new TheaterNotFoundException("THEATER NOT FOUND"));
+
+		    Show show = showRepo.findById(showid)
+		            .orElseThrow(() ->
+		                new ShowNotFoundException("SHOW NOT FOUND"));
+
+		    if (show.getTheater() == null ||
+		            show.getTheater().getId() != theaterid) {
+		        throw new ShowNotFoundException(
+		                "SHOW DOES NOT BELONG TO THIS THEATER");
+		    }
+
+		    ResponseStructure<Show> response = new ResponseStructure<>();
+		    response.setStatuscode(HttpStatus.OK.value());
+		    response.setMessage("SHOW DETAILS FETCHED SUCCESSFULLY");
+		    response.setData(show);
+
+		    return new ResponseEntity<>(response, HttpStatus.OK);
+		}
+	
 }
