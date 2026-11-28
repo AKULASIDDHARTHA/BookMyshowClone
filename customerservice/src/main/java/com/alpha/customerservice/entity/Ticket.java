@@ -25,6 +25,16 @@
 	    private LocalDateTime bookingDate;
 	    private boolean paymentStatus;
 	    
+	    private Long showId;
+
+	    public Long getShowId() {
+	        return showId;
+	    }
+
+	    public void setShowId(Long showId) {
+	        this.showId = showId;
+	    }
+	    
 		public boolean isPaymentStatus() {
 			return paymentStatus;
 		}
@@ -32,7 +42,7 @@
 			this.paymentStatus = paymentStatus;
 		}
 		public Ticket(String username, String seatno, LocalTime showtime, String moviename, int screenno,
-				double totalamount, LocalDate date, String language, LocalDateTime bookingDate,boolean paymentStatus) {
+				double totalamount, LocalDate date, String language, LocalDateTime bookingDate,boolean paymentStatus,Long showId) {
 			super();
 			this.username = username;
 			this.seatno = seatno;
@@ -44,6 +54,7 @@
 			this.language = language;
 			this.bookingDate = bookingDate;
 			this.paymentStatus=paymentStatus;
+			this.showId=showId;
 		}
 		public Ticket() {
 			super();

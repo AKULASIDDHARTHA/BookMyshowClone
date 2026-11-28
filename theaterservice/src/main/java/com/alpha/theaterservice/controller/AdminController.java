@@ -55,7 +55,6 @@ public class AdminController {
         return adminser.findAllMovies();
     }
     
-    
     @PutMapping("/admin/movie/update")
     public ResponseEntity<ResponseStructure<Movie>> updateMovie(
             @RequestBody CreateMovieDto dto) {

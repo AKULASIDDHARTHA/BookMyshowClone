@@ -90,4 +90,15 @@ public class CustomerController {
 
         return ResponseEntity.ok(ticket);
     }
+    
+    
+    @DeleteMapping("/customer/cancelSeatSelection")
+    public ResponseEntity<List<SeatDto>> cancelSeatSelection(
+            @RequestParam long custId) {
+
+        List<SeatDto> result =
+                customerservice.cancelSeatSelection(custId);
+
+        return ResponseEntity.ok(result);
+    }	
 }

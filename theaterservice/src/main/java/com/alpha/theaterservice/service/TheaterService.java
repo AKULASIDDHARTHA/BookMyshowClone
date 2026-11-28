@@ -319,32 +319,33 @@ public List<Seat> generateSeats(int capacity, Show show) {
         return seatRepo.findByShow_IdAndStatus(showId, "AVAILABLE");
     }
 
-	
 	@Transactional
 	public List<Seat> lockSeats(long showId, List<String> seatNumbers) {
 
-		for (int i = 0; i < seatNumbers.size(); i++) {
-		    seatNumbers.set(i, seatNumbers.get(i).toUpperCase());
-		}
+	    for (int i = 0; i < seatNumbers.size(); i++) {
+	        seatNumbers.set(i, seatNumbers.get(i).trim().toUpperCase());
+	    }
+
 	    List<Seat> seats =
 	            seatRepo.findByShow_IdAndSeatnoIn(showId, seatNumbers);
 
 	    if (seats.size() != seatNumbers.size()) {
 	        throw new SeatNotFoundException("SELECTED SEATS NOT FOUND");
 	    }
+
 	    for (Seat seat : seats) {
-	    	if (!seat.getStatus().equalsIgnoreCase("AVAILABLE")) {
-	    	    throw new SeatNotAvailableException(
-	    	            seat.getSeatno() + " is not available");
-	    	}
+	        if (!seat.getStatus().equalsIgnoreCase("AVAILABLE")) {
+	            throw new SeatNotAvailableException(
+	                    seat.getSeatno() + " IS ALREADY BOOKED");
+	        }
 	    }
+
 	    for (Seat seat : seats) {
-	        seat.setStatus("LOCKED");
+	        seat.setStatus("BOOKED");
 	    }
-	    seatRepo.saveAll(seats);
-	    return seats;
+
+	    return seatRepo.saveAll(seats);
 	}
-	
 	
 	public ResponseStructure<Theater> updateTheater(long theaterid, CreateTheaterDto dto) {
 

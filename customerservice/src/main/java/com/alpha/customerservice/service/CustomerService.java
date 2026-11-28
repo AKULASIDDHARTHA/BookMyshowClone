@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -350,44 +351,46 @@ public ConfirmTicketDto bookSeats(long customerId, long showId, List<String> sea
 	    return availableSeats;
 	}
 	
+	
+	
 	public Ticket confirmTicketAndPay(long custId) {
 
-	    // 1. Find confirmation details in Redis
 	    String confirmKey = "confirmticket:" + custId;
 
 	    String json = redisTemplate.opsForValue().get(confirmKey);
 
 	    if (json == null) {
-	        throw new RuntimeException(
-	                "TICKET CONFIRMATION EXPIRED OR NOT FOUND");
+	        throw new RuntimeException("TICKET CONFIRMATION EXPIRED OR NOT FOUND");
 	    }
 
 	    try {
 
-	        // 2. Convert JSON into ConfirmTicketDto
 	        ConfirmTicketDto dto =
 	                objectMapper.readValue(json, ConfirmTicketDto.class);
 
-	        // 3. Check whether all selected seats are still frozen
 	        String[] seats = dto.getSeatno().split(",");
 
+	        String lockValue = "customer:" + custId;
+
+	        // 1. Check Redis seat locks
 	        for (String seat : seats) {
-	            String key = getSeatKey(dto.getShowId(), seat);
+
+	            String key = getSeatKey(dto.getShowId(), seat.trim());
 
 	            String value = redisTemplate.opsForValue().get(key);
 
-	            if (!("customer:" + custId).equals(value)) {
+	            if (!lockValue.equals(value)) {
 	                throw new SeatNotAvailableException(
 	                        seat + " RESERVATION EXPIRED");
 	            }
 	        }
 
-	        // 4. Simulated third-party payment
+	        // 2. Simulated payment
 	        boolean payment = true;
 
 	        if (payment) {
 
-	            // 5. Create final Ticket
+	            // 3. Create ticket
 	            Ticket ticket = new Ticket(
 	                    dto.getCustomer(),
 	                    dto.getSeatno(),
@@ -398,29 +401,112 @@ public ConfirmTicketDto bookSeats(long customerId, long showId, List<String> sea
 	                    dto.getDate(),
 	                    dto.getLanguage(),
 	                    LocalDateTime.now(),
-	                    true
+	                    true,
+	                    dto.getShowId()
 	            );
 
 	            Ticket savedTicket = ticketRepo.save(ticket);
 
-	            // 6. Keep the seats frozen after successful payment
-	            for (String seat : seats) {
-	                String key =getSeatKey(dto.getShowId(), seat);
-	                redisTemplate.persist(key);
+	            try {
+
+	                // 4. Send selected seats to Theater Service
+	                List<String> seatNumbers = new ArrayList<>();
+
+	                for (String seat : seats) {
+	                    seatNumbers.add(seat.trim().toUpperCase());
+	                }
+
+	                String seatUrl =
+	                        "http://localhost:8080/shows/seats/lock?showId="
+	                                + dto.getShowId();
+
+	                HttpEntity<List<String>> request =
+	                        new HttpEntity<>(seatNumbers);
+
+	                restTemplate.exchange(
+	                        seatUrl,
+	                        HttpMethod.POST,
+	                        request,
+	                        String.class
+	                );
+
+	            } catch (Exception e) {
+
+	                ticketRepo.delete(savedTicket);
+
+	                throw e;
 	            }
 
-	            // 7. Remove confirmation details from Redis
+	            // 5. Delete temporary Redis locks
+	            for (String seat : seats) {
+
+	                String key = getSeatKey(dto.getShowId(), seat.trim());
+
+	                String value = redisTemplate.opsForValue().get(key);
+
+	                if (lockValue.equals(value)) {
+	                    redisTemplate.delete(key);
+	                }
+	            }
+
+	            // 6. Delete confirmation details
 	            redisTemplate.delete(confirmKey);
 
 	            return savedTicket;
 	        }
+
 	        throw new RuntimeException("PAYMENT FAILED");
 
 	    } catch (SeatNotAvailableException e) {
+
 	        throw e;
+
 	    } catch (Exception e) {
+
 	        throw new RuntimeException(
 	                "PAYMENT PROCESSING FAILED: " + e.getMessage());
 	    }
+	}
+	    
+	public List<SeatDto> cancelSeatSelection(long custId) {
+
+	    String customer = "customer:" + custId;
+
+	    // 1. Get all locked seat keys from Redis
+	    Set<String> keys = redisTemplate.keys("lockseat:*");
+
+	    Long showId = null;
+
+	    // 2. Find seats locked by this customer
+	    if (keys != null) {
+
+	        for (String key : keys) {
+
+	            String value = redisTemplate.opsForValue().get(key);
+
+	            if (customer.equals(value)) {
+
+	                // Extract showId from Redis key
+	                // Example: lockseat:502:F6
+	                String[] parts = key.split(":");
+
+	                showId = Long.parseLong(parts[1]);
+
+	                // 3. Remove seat lock
+	                redisTemplate.delete(key);
+	            }
+	        }
+	    }
+
+	    // 4. Remove confirmation details
+	    redisTemplate.delete("confirmticket:" + custId);
+
+	    // 5. Check whether any locked seats were found
+	    if (showId == null) {
+	        throw new RuntimeException("NO LOCKED SEATS FOUND");
+	    }
+
+	    // 6. Return updated available seats
+	    return availableSeats(showId);
 	}
 }
